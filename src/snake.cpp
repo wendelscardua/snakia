@@ -81,6 +81,7 @@ void Snake::update(Direction input) {
 void Snake::draw_head() {
   auto head = body.peek_head();
   auto coordinate = head.screen_coordinates();
+
   u8 tile;
   switch (head.direction) {
   case Right:
@@ -98,6 +99,13 @@ void Snake::draw_head() {
   default:
     tile = 0;
     break;
+  }
+
+
+  auto next_position = head + head.direction;
+  if (board.has_pellet(next_position.x, next_position.y)) {
+    // NOTE: "open mouth" tiles are offset from "closed mouth" ones by $10
+    tile += 0x10;
   }
 
   one_vram_buffer(tile, coordinate);
