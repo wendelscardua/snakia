@@ -6,9 +6,11 @@
 
 class Snake {
 public:
-  Queue<Position, Board::WIDTH * Board::HEIGHT> body;
+  static const size_t MAX_LENGTH = Board::WIDTH * Board::HEIGHT;
+  Queue<Position, MAX_LENGTH + 1> body;
   u16 max_length;
   bool is_alive;
+  bool ate;
 
   Snake();
 
