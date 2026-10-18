@@ -1,6 +1,8 @@
 # add_metasprite_asset(SOURCE "metasprites.nss" TARGET "metasprites.cpp"
 #                      HEADER "metasprites.hpp" NAMESPACE "UI")
 
+add_raw_assets(BANK -1)
+
 add_library(SourceObj
   OBJECT
 
@@ -11,35 +13,12 @@ add_library(SourceObj
   input.cpp
   ggsound.cpp
   log.cpp
-  assets.s
   metasprites.s
   soundtrack.hpp
 
   # ${CMAKE_CURRENT_BINARY_DIR}/metasprites.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/assets.cpp
 )
-
-set_property(
-  SOURCE
-  assets.s
-  PROPERTY
-  OBJECT_DEPENDS
-
-  bg.chr
-  spr.chr
-
-  screen.nam
-
-  bg.pal
-  spr.pal
-)
-
-add_raw_asset(SOURCE "bg.chr")
-add_raw_asset(SOURCE "spr.chr")
-
-add_raw_asset(SOURCE "screen.nam")
-
-add_raw_asset(SOURCE "bg.pal")
-add_raw_asset(SOURCE "spr.pal")
 
 set_property(
   SOURCE
@@ -55,8 +34,12 @@ set_target_properties(SourceObj PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(
   SourceObj
   PRIVATE
-  ${CMAKE_BINARY_DIR}/assets
   ${CMAKE_BINARY_DIR}/generated
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
 )
+target_compile_options(SourceObj PRIVATE
+  $<$<COMPILE_LANGUAGE:CXX>:-Wno-c23-extensions>
+  $<$<COMPILE_LANGUAGE:CXX>:--embed-dir=${CMAKE_SOURCE_DIR}/assets>
+)
+

@@ -16,38 +16,54 @@ class GenerateAssetsData < Thor
   method_option :starting_bank, type: :numeric, required: true
   method_option :bank_size, type: :numeric, default: 0x4000
   method_option :extensions, type: :array, default: %w[.pal .chr .nam]
+  method_option :chr_rom, type: :boolean, default: false
   def generate(cpp_file, h_file, input_folder)
     starting_bank = options[:starting_bank]
     bank_size = options[:bank_size]
     extensions = options[:extensions]
+    chr_rom = options[:chr_rom]
 
     current_bank = starting_bank
     current_bank_size = 0
-    assets = { current_bank => [] }
+    assets = {}
 
     base = Pathname.new(input_folder)
 
     base.find do |path|
       next if FileTest.directory?(path)
 
-      next unless extensions.include?(File.extname(path))
+      extension = File.extname(path)
 
-      file_size = FileTest.size(path)
-      if file_size + current_bank_size > bank_size
+      next unless extensions.include?(extension)
 
-        current_bank_size = 0
-        current_bank -= 1
-        assets[current_bank] = []
+      if chr_rom && extension == '.chr'
+        section = '.chr_rom'
+      else
+        file_size = FileTest.size(path)
+        if file_size + current_bank_size > bank_size
+
+          current_bank_size = 0
+          current_bank -= 1
+          raise 'Bank overflow' if current_bank < -1
+        end
+
+        current_bank_size += file_size
+
+        section = ".prg_rom_#{current_bank.negative? ? 'fixed' : current_bank}.rodata.assets"
       end
-
-      current_bank_size += file_size
 
       file = path.relative_path_from(base).to_s
 
-      assets[current_bank] << {
+      assets[section] ||= []
+      assets[section] << {
         file:,
+        extension:,
         symbol: symbolize(file)
       }
+    end
+
+    assets.each_value do |embeds|
+      embeds.sort_by! { |embed| "#{embed[:extension]}##{embed[:symbol]}" }
     end
 
     File.open(cpp_file, 'w') do |f|
@@ -56,10 +72,10 @@ class GenerateAssetsData < Thor
         #define ASSET(symbol) [[gnu::retain]] const char symbol[] =
       PREAMBLE
 
-      assets.each do |bank, embeds|
+      assets.each do |section, embeds|
         f.puts <<~PRAGMA
 
-          #pragma clang section rodata = ".prg_rom_#{bank}.rodata.assets"
+          #pragma clang section rodata = "#{section}"
 
         PRAGMA
 
