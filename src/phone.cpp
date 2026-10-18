@@ -15,6 +15,10 @@ Phone::Phone() : keypad_position(5), ticks(0), ticks_per_step(24) {
   board.clear();
   snake.reset();
   snake.draw_head();
+  board.spawn_pellet();
+  if (board.is_pellet_valid()) {
+    board.draw_pellet();
+  }
   flush_vram_update2();
 
   ppu_on_all();
@@ -50,6 +54,13 @@ void Phone::loop() {
 void Phone::playing_update() {
   ticks++;
   if (ticks < ticks_per_step) {
+    // won't move the snake this frame, take the time to update pellet
+    if (!board.is_pellet_valid()) {
+      board.spawn_pellet();
+      if (board.is_pellet_valid()) {
+        board.draw_pellet();
+      }
+    }
     return;
   }
   ticks = 0;
