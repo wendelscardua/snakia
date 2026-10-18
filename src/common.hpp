@@ -9,6 +9,19 @@ typedef int8_t s8;
 typedef int16_t s16;
 typedef int32_t s32;
 
+enum Direction {
+  None = 0,
+  UpLeft = 1,
+  Up = 2,
+  UpRight = 3,
+  Left = 4,
+  Center = 5,
+  Right = 6,
+  DownLeft = 7,
+  Down = 8,
+  DownRight = 9,
+};
+
 // neslib/nesdoug internal stuff
 
 extern "C" char OAM_BUF[256];

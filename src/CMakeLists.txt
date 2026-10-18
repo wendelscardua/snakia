@@ -8,12 +8,17 @@ add_library(SourceObj
 
   main.cpp
   global.cpp
+  phone.cpp
+
+  board.cpp
+  snake.cpp
 
   attributes.cpp
   input.cpp
   ggsound.cpp
   log.cpp
   metasprites.s
+  position.cpp
   soundtrack.hpp
 
   # ${CMAKE_CURRENT_BINARY_DIR}/metasprites.cpp

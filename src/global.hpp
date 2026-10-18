@@ -10,12 +10,13 @@
 */
 class Global {
 public:
-  enum class GameState : u8 {  };
+  enum class GameState : u8 { Playing };
 
   GameState game_state;
 
-  Input p1_input;
-  Input p2_input;
+  Input input;
 
   Global();
 };
+
+extern Global global_state;
