@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'find'
+require 'pathname'
+require 'thor'
+
+# Tool for converting assets into data
+class GenerateAssetsData < Thor
+  def self.exit_on_failure?
+    true
+  end
+
+  desc 'generate CPP HEADER INPUT_FOLDER', 'Generates C++ file and header for embedding of assets'
+  method_option :starting_bank, type: :numeric, required: true
+  method_option :bank_size, type: :numeric, default: 0x4000
+  method_option :extensions, type: :array, default: %w[.pal .chr .nam]
+  def generate(cpp_file, h_file, input_folder)
+    starting_bank = options[:starting_bank]
+    bank_size = options[:bank_size]
+    extensions = options[:extensions]
+
+    current_bank = starting_bank
+    current_bank_size = 0
+    assets = { current_bank => [] }
+
+    base = Pathname.new(input_folder)
+
+    base.find do |path|
+      next if FileTest.directory?(path)
+
+      next unless extensions.include?(File.extname(path))
+
+      file_size = FileTest.size(path)
+      if file_size + current_bank_size > bank_size
+
+        current_bank_size = 0
+        current_bank -= 1
+        assets[current_bank] = []
+      end
+
+      current_bank_size += file_size
+
+      file = path.relative_path_from(base).to_s
+
+      assets[current_bank] << {
+        file:,
+        symbol: symbolize(file)
+      }
+    end
+
+    File.open(cpp_file, 'w') do |f|
+      f.puts <<~PREAMBLE
+        #include "#{h_file}"
+        #define ASSET(symbol) [[gnu::retain]] const char symbol[] =
+      PREAMBLE
+
+      assets.each do |bank, embeds|
+        f.puts <<~PRAGMA
+
+          #pragma clang section rodata = ".prg_rom_#{bank}.rodata.assets"
+
+        PRAGMA
+
+        embeds.each do |embed|
+          embed => { file:, symbol: }
+          f.puts <<~EMBED
+            ASSET(#{symbol}) {
+              #embed "#{file}"
+            };
+
+          EMBED
+        end
+      end
+    end
+
+    File.open(h_file, 'w') do |f|
+      f.puts '#pragma once'
+      f.puts 'extern "C" {'
+      assets.each_value do |embeds|
+        embeds.each do |embed|
+          embed => { symbol: }
+          f.puts "extern const char #{symbol}[];"
+        end
+      end
+      f.puts '};'
+    end
+  end
+
+  private
+
+  def symbolize(path)
+    path.gsub(/\W/, '_')
+  end
+end
+
+GenerateAssetsData.start

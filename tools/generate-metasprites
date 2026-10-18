@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'thor'
+require 'nexxt-parser'
+
+# Tool for converting a NEXXT session into metasprite data
+class GenerateMetasprites < Thor
+  def self.exit_on_failure?
+    true
+  end
+
+  desc 'generate CPP HEADER SESSION_FILE', 'Generates C++ file and header based on NEXXT session'
+  method_option :bank, type: :string, required: true
+  method_option :namespace, type: :string, required: false
+  def generate(cpp_file, h_file, session_file)
+    namespace = options[:namespace] || 'Metasprite'
+
+    bank = options[:bank]
+
+    session = NEXXT::Parser::Session.read(session_file)
+
+    File.open(cpp_file, 'w') do |f|
+      f.puts <<~PREAMBLE
+        #include "#{h_file}"
+
+        #pragma clang section rodata = ".prg_rom_#{bank}.rodata.metasprites"
+
+        namespace #{namespace} {
+      PREAMBLE
+
+      session.metasprites.each do |metasprite|
+        f.puts "  const Sprite #{metasprite.name.gsub(/\s+/, '')}[] = {"
+        metasprite.sprites.each do |sprite|
+          f.puts "     { .spr = { #{sprite.x}, #{sprite.y}, #{format('0x%02x', sprite.tile)}, #{sprite.attribute} } },"
+        end
+        f.puts '    { .terminator = 0x80 } };'
+      end
+      f.puts '}'
+    end
+
+    File.open(h_file, 'w') do |f|
+      f.puts <<~PREAMBLE
+        #pragma once
+        #include "common.hpp"
+        namespace #{namespace} {
+          static constexpr u8 BANK = #{bank};
+      PREAMBLE
+      session.metasprites.each do |metasprite|
+        f.puts "  extern const Sprite #{metasprite.name.gsub(/\s+/, '')}[];"
+      end
+      f.puts '  enum class Metasprite_Id : u8 {'
+      session.metasprites.each do |metasprite|
+        f.puts "    #{metasprite.name.gsub(/\s+/, '')},"
+      end
+      f.puts '  };'
+      f.puts '}'
+    end
+  end
+end
+
+GenerateMetasprites.start
