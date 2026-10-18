@@ -1,12 +1,12 @@
 #pragma once
 
+#include "board.hpp"
 #include "position.hpp"
-#include "common.hpp"
 #include "queue.hpp"
 
 class Snake {
 public:
-  Queue<Position, 300> body;
+  Queue<Position, Board::WIDTH * Board::HEIGHT> body;
   u16 max_length;
   bool is_alive;
 

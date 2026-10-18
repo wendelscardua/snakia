@@ -3,8 +3,8 @@
 #include "common.hpp"
 class Board {
 public:
-  static const u8 WIDTH = 20;
-  static const u8 HEIGHT = 15;
+  static const u8 WIDTH = 22;
+  static const u8 HEIGHT = 13;
 
   Board();
 
