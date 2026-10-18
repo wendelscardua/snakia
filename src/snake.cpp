@@ -68,9 +68,9 @@ void Snake::update(Direction input) {
 
   body.push(new_head);
 
-  draw_head();
-
-  if (board.has_pellet(new_head.x, new_head.y)) {
+  if (board.is_set(new_head.x, new_head.y)) {
+    is_alive = false;
+  } else if (board.has_pellet(new_head.x, new_head.y)) {
     ate = true;
     if (max_length < MAX_LENGTH) {
       max_length++;
@@ -84,6 +84,9 @@ void Snake::update(Direction input) {
 
     draw_tail();
   }
+
+  // NOTE: drawing this later to prevent a "headless ouroboros" game over state
+  draw_head();
 }
 
 void Snake::draw_head() {
