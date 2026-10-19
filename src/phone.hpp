@@ -25,10 +25,14 @@ private:
   Position thumb_position;
   u8 thumb_pressed_ticks;
 
+  u8 menu_option;
+
   Queue<Direction, 4> input_buffer;
 
   void game_reset();
+  void menu_reset();
 
+  void menu_update();
   void playing_update();
   void game_over_update();
 
@@ -37,4 +41,7 @@ private:
   void render_thumb();
 
   void refresh_score_hud();
+
+  void deselect_menu_option();
+  void select_menu_option();
 };

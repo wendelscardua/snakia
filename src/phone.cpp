@@ -26,10 +26,11 @@ Phone::Phone()
   vram_adr(NTADR_A(0, 0));
   vram_write(screen_nam, 1024);
 
+  pal_bright(0);
   ppu_on_all();
   pal_fade_to(0, 4);
 
-  global_state.game_state = Global::GameState::Resetting;
+  global_state.game_state = Global::GameState::PrepareMenu;
 }
 
 Phone::~Phone() {
@@ -37,6 +38,29 @@ Phone::~Phone() {
 }
 
 void Phone::game_reset() {
+  const char dark_row[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  const char light_row[] = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+  for (u8 row = 0; row < Board::HEIGHT + 4; row++) {
+    multi_vram_buffer_horz(dark_row, 24,
+                           NTADR_A(Position::X_SCREEN_OFFSET - 1,
+                                   row + Position::Y_SCREEN_OFFSET - 3));
+    ppu_wait_nmi();
+  }
+  for (u8 row = 0; row < Board::HEIGHT + 4; row++) {
+    multi_vram_buffer_horz(light_row, 24,
+                           NTADR_A(Position::X_SCREEN_OFFSET - 1,
+                                   row + Position::Y_SCREEN_OFFSET - 3));
+    ppu_wait_nmi();
+  }
+  for (u8 row = 0; row < Board::HEIGHT + 4; row++) {
+    auto position = NTADR_A(Position::X_SCREEN_OFFSET - 1,
+                            row + Position::Y_SCREEN_OFFSET - 3);
+    multi_vram_buffer_horz(screen_nam + position - NTADR_A(0, 0), 24, position);
+    ppu_wait_nmi();
+  }
+
   score = 0;
   ticks = 0;
   ticks_per_step = TICKS_PER_LEVEL[level];
@@ -44,6 +68,36 @@ void Phone::game_reset() {
   board.clear();
   snake.reset();
   snake.draw_head();
+  refresh_score_hud();
+  board.update_food();
+}
+
+void Phone::menu_reset() {
+  const char dark_row[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  const char light_row[] = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+  for (u8 row = 0; row < Board::HEIGHT + 4; row++) {
+    multi_vram_buffer_horz(dark_row, 24,
+                           NTADR_A(Position::X_SCREEN_OFFSET - 1,
+                                   row + Position::Y_SCREEN_OFFSET - 3));
+    ppu_wait_nmi();
+  }
+  for (u8 row = 0; row < Board::HEIGHT + 4; row++) {
+    multi_vram_buffer_horz(light_row, 24,
+                           NTADR_A(Position::X_SCREEN_OFFSET - 1,
+                                   row + Position::Y_SCREEN_OFFSET - 3));
+    ppu_wait_nmi();
+  }
+  for (u8 row = 0; row < Board::HEIGHT + 4; row++) {
+    auto position = NTADR_A(Position::X_SCREEN_OFFSET - 1,
+                            row + Position::Y_SCREEN_OFFSET - 3);
+    multi_vram_buffer_horz(menu_nam + position - NTADR_A(0, 0), 24, position);
+    ppu_wait_nmi();
+  }
+
+  menu_option = 0;
+  select_menu_option();
 }
 
 void Phone::loop() {
@@ -57,42 +111,71 @@ void Phone::loop() {
     thumb_update();
 
     switch (global_state.game_state) {
-    case Global::GameState::Resetting: {
-      const char dark_row[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-      const char light_row[] = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-                                3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
-      for (u8 row = 0; row < Board::HEIGHT; row++) {
-        multi_vram_buffer_horz(dark_row, 22,
-                               NTADR_A(Position::X_SCREEN_OFFSET,
-                                       row + Position::Y_SCREEN_OFFSET));
-        ppu_wait_nmi();
-      }
-      for (u8 row = 0; row < Board::HEIGHT; row++) {
-        multi_vram_buffer_horz(light_row, 22,
-                               NTADR_A(Position::X_SCREEN_OFFSET,
-                                       row + Position::Y_SCREEN_OFFSET));
-        ppu_wait_nmi();
-      }
-
+    case Global::GameState::PrepareMenu:
+      menu_reset();
+      global_state.game_state = Global::GameState::Menu;
+      break;
+    case Global::GameState::PrepareGame:
       game_reset();
-
       global_state.game_state = Global::GameState::Playing;
-    }; break;
+      break;
     case Global::GameState::Playing:
       playing_update();
       break;
     case Global::GameState::GameOver:
       game_over_update();
       break;
-    case Global::GameState::Title:
     case Global::GameState::Menu:
+      menu_update();
       break;
     }
 
     render_thumb();
 
     oam_hide_rest();
+  }
+}
+
+void Phone::menu_update() {
+  if (input_buffer.is_empty()) {
+    return;
+  }
+  auto direction = input_buffer.pop();
+
+  switch (direction) {
+  case Up:
+    deselect_menu_option();
+    if (menu_option == 0) {
+      menu_option = 3;
+    } else {
+      menu_option--;
+    }
+    select_menu_option();
+    break;
+  case Down:
+    deselect_menu_option();
+    if (menu_option == 3) {
+      menu_option = 0;
+    } else {
+      menu_option++;
+    }
+    select_menu_option();
+    break;
+  case Center:
+    switch (menu_option) {
+    case 0:
+      global_state.game_state = Global::GameState::PrepareGame;
+      break;
+    }
+    break;
+  case None:
+  case UpLeft:
+  case UpRight:
+  case Left:
+  case Right:
+  case DownLeft:
+  case DownRight:
+    break;
   }
 }
 
@@ -130,7 +213,7 @@ void Phone::game_over_update() {
   // TODO: draw game over message
 
   if (!input_buffer.is_empty() && input_buffer.pop() == Center) {
-    global_state.game_state = Global::GameState::Resetting;
+    global_state.game_state = Global::GameState::PrepareMenu;
   }
 }
 
@@ -273,4 +356,71 @@ void Phone::refresh_score_hud() {
 
   multi_vram_buffer_horz(first_row, 4, NTADR_A(5, 2));
   multi_vram_buffer_horz(second_row, 4, NTADR_A(5, 3));
+}
+
+// start, level, cheat
+const unsigned char deselected_text[4][12 * 3] = {
+    {
+        0xc0, 0xd0, 0xf0, 0xd0, 0xf0, 0xd0, 0xf0, 0xd0, 0xf0, 0xd0, 0xf0, 0xc0,
+        0xc0, 0xd1, 0xf0, 0xc0, 0xe2, 0xd1, 0xf1, 0xd1, 0xf1, 0xc0, 0xe2, 0xc0,
+        0xc0, 0xd0, 0xf1, 0xc0, 0xe2, 0xd1, 0xd1, 0xd1, 0xd2, 0xc0, 0xe2, 0xc0,
+    },
+    {
+        0xc0, 0xd0, 0xc0, 0xd0, 0xf0, 0xd0, 0xd0, 0xd0, 0xf0, 0xd0, 0xc0, 0xc0,
+        0xc0, 0xd1, 0xc0, 0xd1, 0xf0, 0xd1, 0xd1, 0xd1, 0xf0, 0xd1, 0xc0, 0xc0,
+        0xc0, 0xd1, 0xf0, 0xd1, 0xf0, 0xd1, 0xe2, 0xd1, 0xf0, 0xd1, 0xf0, 0xc0,
+    },
+    {
+        0xc0, 0xd0, 0xf0, 0xe0, 0xd0, 0xf0, 0xd0, 0xf0, 0xd0, 0xf0, 0xc0, 0xc0,
+        0xc0, 0xd1, 0xd1, 0xd1, 0xd1, 0xf1, 0xd0, 0xf1, 0xd1, 0xf0, 0xc0, 0xc0,
+        0xc0, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xd1, 0xf0, 0xd1, 0xf0, 0xc0, 0xc0,
+    },
+    {
+        0xc0, 0xd0, 0xf0, 0xd0, 0xd0, 0xd0, 0xf0, 0xd0, 0xf0, 0xd0, 0xf0, 0xc0,
+        0xc0, 0xd1, 0xc0, 0xd1, 0xf1, 0xd1, 0xf0, 0xd1, 0xf1, 0xc0, 0xe2, 0xc0,
+        0xc0, 0xd1, 0xf0, 0xd1, 0xd1, 0xd1, 0xf0, 0xd1, 0xd1, 0xc0, 0xe2, 0xc0,
+    }};
+
+const unsigned char selected_text[4][12 * 3] = {
+    {
+        0xc4, 0xd4, 0xf4, 0xd4, 0xf4, 0xd4, 0xf4, 0xd4, 0xf4, 0xd4, 0xf4, 0xc4,
+        0xc4, 0xd5, 0xf4, 0xc4, 0xe6, 0xd5, 0xf5, 0xd5, 0xf5, 0xc4, 0xe6, 0xc4,
+        0xc4, 0xd4, 0xf5, 0xc4, 0xe6, 0xd5, 0xd5, 0xd5, 0xd6, 0xc4, 0xe6, 0xc4,
+    },
+    {
+        0xc4, 0xd4, 0xc4, 0xd4, 0xf4, 0xd4, 0xd4, 0xd4, 0xf4, 0xd4, 0xc4, 0xc4,
+        0xc4, 0xd5, 0xc4, 0xd5, 0xf4, 0xd5, 0xd5, 0xd5, 0xf4, 0xd5, 0xc4, 0xc4,
+        0xc4, 0xd5, 0xf4, 0xd5, 0xf4, 0xd5, 0xe6, 0xd5, 0xf4, 0xd5, 0xf4, 0xc4,
+    },
+    {
+        0xc4, 0xd4, 0xf4, 0xe4, 0xd4, 0xf4, 0xd4, 0xf4, 0xd4, 0xf4, 0xc4, 0xc4,
+        0xc4, 0xd5, 0xd5, 0xd5, 0xd5, 0xf5, 0xd4, 0xf5, 0xd5, 0xf4, 0xc4, 0xc4,
+        0xc4, 0xd5, 0xd5, 0xd5, 0xd5, 0xd5, 0xd5, 0xf4, 0xd5, 0xf4, 0xc4, 0xc4,
+    },
+    {
+        0xc4, 0xd4, 0xf4, 0xd4, 0xd4, 0xd4, 0xf4, 0xd4, 0xf4, 0xd4, 0xf4, 0xc4,
+        0xc4, 0xd5, 0xc4, 0xd5, 0xf5, 0xd5, 0xf4, 0xd5, 0xf5, 0xc4, 0xe6, 0xc4,
+        0xc4, 0xd5, 0xf4, 0xd5, 0xd5, 0xd5, 0xf4, 0xd5, 0xd5, 0xc4, 0xe6, 0xc4,
+    }};
+
+void Phone::deselect_menu_option() {
+  auto position = NTADR_A(5, 5 + 3 * menu_option);
+  multi_vram_buffer_horz(deselected_text[menu_option], 12, position);
+  ppu_wait_nmi();
+  multi_vram_buffer_horz(deselected_text[menu_option] + 12, 12,
+                         position + 0x20);
+  ppu_wait_nmi();
+  multi_vram_buffer_horz(deselected_text[menu_option] + 24, 12,
+                         position + 0x40);
+  ppu_wait_nmi();
+}
+
+void Phone::select_menu_option() {
+  auto position = NTADR_A(5, 5 + 3 * menu_option);
+  multi_vram_buffer_horz(selected_text[menu_option], 12, position);
+  ppu_wait_nmi();
+  multi_vram_buffer_horz(selected_text[menu_option] + 12, 12, position + 0x20);
+  ppu_wait_nmi();
+  multi_vram_buffer_horz(selected_text[menu_option] + 24, 12, position + 0x40);
+  ppu_wait_nmi();
 }

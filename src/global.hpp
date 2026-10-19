@@ -10,7 +10,7 @@
 */
 class Global {
 public:
-  enum class GameState : u8 { Title, Menu, Resetting, Playing, GameOver };
+  enum class GameState : u8 { PrepareMenu, Menu, PrepareGame, Playing, GameOver };
 
   GameState game_state;
 
