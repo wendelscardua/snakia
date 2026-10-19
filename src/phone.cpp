@@ -48,6 +48,8 @@ void Phone::game_reset() {
   if (board.is_pellet_valid()) {
     board.draw_pellet();
   }
+
+  refresh_score_hud();
 }
 
 void Phone::loop() {
@@ -79,13 +81,15 @@ void Phone::loop() {
         ppu_wait_nmi();
       }
 
-
       game_reset();
 
       global_state.game_state = Global::GameState::Playing;
     }; break;
     case Global::GameState::Playing:
       playing_update();
+      break;
+    case Global::GameState::GameOver:
+      game_over_update();
       break;
     case Global::GameState::Title:
     case Global::GameState::Menu:
@@ -118,6 +122,18 @@ void Phone::playing_update() {
     score += level;
 
     refresh_score_hud();
+  }
+
+  if (!snake.is_alive) {
+    global_state.game_state = Global::GameState::GameOver;
+  }
+}
+
+void Phone::game_over_update() {
+  // TODO: draw game over message
+
+  if (!input_buffer.is_empty() && input_buffer.pop() == Center) {
+    global_state.game_state = Global::GameState::Resetting;
   }
 }
 
@@ -158,7 +174,7 @@ void Phone::thumb_update() {
   thumb_position.y = interpolate(thumb_position.y, target.y);
 
   if (pressed & PAD_A) {
-    if (keypad_position != 5 && !input_buffer.is_full()) {
+    if (!input_buffer.is_full()) {
       input_buffer.push((Direction)keypad_position);
     }
     thumb_position = target;
@@ -255,8 +271,8 @@ void Phone::refresh_score_hud() {
   first_row[2] = 0x30 + digit;
   second_row[2] = 0x40 + digit;
 
-  first_row[3] = 0x30 + (u8) value;
-  second_row[3] = 0x40 + (u8) value;
+  first_row[3] = 0x30 + (u8)value;
+  second_row[3] = 0x40 + (u8)value;
 
   multi_vram_buffer_horz(first_row, 4, NTADR_A(5, 2));
   multi_vram_buffer_horz(second_row, 4, NTADR_A(5, 3));

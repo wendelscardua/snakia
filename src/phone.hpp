@@ -30,6 +30,7 @@ private:
   void game_reset();
 
   void playing_update();
+  void game_over_update();
 
   void thumb_update();
 
