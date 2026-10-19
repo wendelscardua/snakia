@@ -1,5 +1,5 @@
-# add_metasprite_asset(SOURCE "metasprites.nss" TARGET "metasprites.cpp"
-#                      HEADER "metasprites.hpp" NAMESPACE "UI")
+add_metasprite_asset(SOURCE "metasprites.nss" TARGET "ui-metasprites.cpp"
+                     HEADER "ui-metasprites.hpp" NAMESPACE "UI" BANK "fixed")
 
 add_raw_assets(BANK -1)
 
@@ -21,7 +21,7 @@ add_library(SourceObj
   position.cpp
   soundtrack.hpp
 
-  # ${CMAKE_CURRENT_BINARY_DIR}/metasprites.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/ui-metasprites.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/assets.cpp
 )
 

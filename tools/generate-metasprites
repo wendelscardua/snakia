@@ -45,8 +45,10 @@ class GenerateMetasprites < Thor
         #pragma once
         #include "common.hpp"
         namespace #{namespace} {
-          static constexpr u8 BANK = #{bank};
       PREAMBLE
+
+      f.puts "  static constexpr u8 BANK = #{bank};" if bank != 'fixed'
+
       session.metasprites.each do |metasprite|
         f.puts "  extern const Sprite #{metasprite.name.gsub(/\s+/, '')}[];"
       end

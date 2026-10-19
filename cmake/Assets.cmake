@@ -50,13 +50,22 @@ endfunction()
 
 function(add_metasprite_asset)
   set(options)
-  set(oneValueArgs SOURCE TARGET HEADER NAMESPACE)
+  set(oneValueArgs SOURCE TARGET HEADER BANK NAMESPACE)
   set(multiValueArgs)
-  cmake_parse_arguments(ASSET "${options}" "${oneValueArgs}"
-                        "${multiValueArgs}" ${ARGN})
+  cmake_parse_arguments(
+    ASSET
+    "${options}"
+    "${oneValueArgs}"
+    "${multiValueArgs}"
+    ${ARGN}
+  )
 
   if (NOT ASSET_SOURCE)
     message(FATAL_ERROR "Raw asset FILE is required!")
+  endif()
+
+  if (NOT ASSET_BANK)
+    message(FATAL_ERROR "Bank BANK is required!")
   endif()
 
   find_program(
@@ -79,15 +88,17 @@ function(add_metasprite_asset)
   if (ASSET_HEADER)
     set(ASSET_HEADER_DEST "${CMAKE_CURRENT_BINARY_DIR}/${ASSET_HEADER}")
   else()
-    set(ASSET_DEST "${CMAKE_CURRENT_BINARY_DIR}/${ASSET_SOURCE}.hpp")
+    set(ASSET_HEADER_DEST "${CMAKE_CURRENT_BINARY_DIR}/${ASSET_SOURCE}.hpp")
   endif()
 
   get_filename_component(BASE_NAME ${ASSET_DEST} NAME)
   get_filename_component(BASE_HEADER_NAME ${ASSET_HEADER_DEST} NAME)
 
-  add_custom_command(OUTPUT ${ASSET_DEST} ${ASSET_HEADER_DEST} COMMAND
-                     ${GENERATE_METASPRITES} generate ${ASSET_DEST}
-                     ${ASSET_HEADER_DEST} ${ASSET_SRC} --namespace
-                     ${ASSET_NAMESPACE} DEPENDS ${GENERATE_METASPRITES}
-                     ${ASSET_SRC})
+  add_custom_command(
+    OUTPUT ${ASSET_DEST} ${ASSET_HEADER_DEST}
+    COMMAND ${GENERATE_METASPRITES}
+            generate ${ASSET_DEST} ${ASSET_HEADER_DEST} ${ASSET_SRC}
+            --bank ${ASSET_BANK} --namespace ${ASSET_NAMESPACE}
+    DEPENDS ${GENERATE_METASPRITES} ${ASSET_SRC}
+  )
 endfunction()
