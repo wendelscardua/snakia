@@ -288,6 +288,47 @@ void Phone::thumb_update() {
   const u8 BUTTONS_LEFT[] = {0, 1, 1, 2, 4, 4, 5, 7, 7, 8};
   const u8 BUTTONS_RIGHT[] = {0, 2, 3, 3, 5, 6, 6, 8, 9, 9};
 
+  if (cheat_enabled) {
+    bool press = false;
+    if (pressed & PAD_UP) {
+      if (!input_buffer.is_full()) {
+        keypad_position = Up;
+        press = true;
+      }
+    } else if (pressed & PAD_DOWN) {
+      if (!input_buffer.is_full()) {
+        keypad_position = Down;
+        press = true;
+      }
+    }
+    if (pressed & PAD_LEFT) {
+      if (!input_buffer.is_full()) {
+        keypad_position = Left;
+        press = true;
+      }
+    } else if (pressed & PAD_RIGHT) {
+      if (!input_buffer.is_full()) {
+        keypad_position = Right;
+        press = true;
+      }
+    }
+    if (pressed & PAD_A) {
+      if (!input_buffer.is_full()) {
+        keypad_position = Center;
+        press = true;
+      }
+    }
+
+    if (press) {
+      if (!input_buffer.is_full()) {
+        input_buffer.push((Direction)keypad_position);
+      }
+      thumb_position = KEYPAD_TO_POSITION[keypad_position];
+      thumb_pressed_ticks = THUMB_PRESSED_TICKS;
+    }
+    return;
+  }
+
   if (pressed & PAD_UP) {
     keypad_position = BUTTONS_ABOVE[keypad_position];
   } else if (pressed & PAD_DOWN) {
