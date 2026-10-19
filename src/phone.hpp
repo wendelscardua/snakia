@@ -27,6 +27,8 @@ private:
 
   u8 menu_option;
 
+  bool cheat_enabled;
+
   Queue<Direction, 4> input_buffer;
 
   void game_reset();
@@ -46,4 +48,5 @@ private:
   void select_menu_option();
 
   void refresh_level_number();
+  void refresh_cheat_status();
 };

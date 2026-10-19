@@ -20,7 +20,8 @@ const Position KEYPAD_TO_POSITION[] = {
 
 Phone::Phone()
     : level(4), keypad_position(5),
-      thumb_position(KEYPAD_TO_POSITION[keypad_position]) {
+      thumb_position(KEYPAD_TO_POSITION[keypad_position]),
+      cheat_enabled(false) {
   pal_bg(bg_pal);
   pal_spr(spr_pal);
   vram_adr(NTADR_A(0, 0));
@@ -99,6 +100,7 @@ void Phone::menu_reset() {
   menu_option = 0;
   select_menu_option();
   refresh_level_number();
+  refresh_cheat_status();
 }
 
 void Phone::loop() {
@@ -173,6 +175,13 @@ void Phone::menu_update() {
         refresh_level_number();
       }
       break;
+    case 2:
+      // TODO: select maze
+      break;
+    case 3:
+      cheat_enabled = !cheat_enabled;
+      refresh_cheat_status();
+      break;
     }
     break;
   case Left:
@@ -185,6 +194,13 @@ void Phone::menu_update() {
         refresh_level_number();
       }
       break;
+    case 2:
+      // TODO: select maze
+      break;
+    case 3:
+      cheat_enabled = !cheat_enabled;
+      refresh_cheat_status();
+      break;
     }
     break;
   case Right:
@@ -196,6 +212,13 @@ void Phone::menu_update() {
         level++;
         refresh_level_number();
       }
+      break;
+    case 2:
+      // TODO: select maze
+      break;
+    case 3:
+      cheat_enabled = !cheat_enabled;
+      refresh_cheat_status();
       break;
     }
     break;
@@ -465,4 +488,16 @@ void Phone::refresh_level_number() {
   multi_vram_buffer_horz(level_digit[level - 1], 2, NTADR_A(18, 8));
   multi_vram_buffer_horz(level_digit[level - 1] + 2, 2, NTADR_A(18, 8) + 0x20);
   multi_vram_buffer_horz(level_digit[level - 1] + 4, 2, NTADR_A(18, 8) + 0x40);
+}
+
+const unsigned char label_off_on[2][4 * 3] = {
+    {0xd0, 0xf0, 0xd0, 0xf0, 0xd1, 0xf0, 0xd1, 0xf0, 0xd1, 0xc0, 0xd1, 0xc0},
+    {0xd0, 0xe0, 0xc0, 0xc0, 0xd1, 0xd1, 0xc0, 0xc0, 0xd1, 0xd1, 0xc0, 0xc0}};
+
+void Phone::refresh_cheat_status() {
+  multi_vram_buffer_horz(label_off_on[cheat_enabled], 4, NTADR_A(20, 14));
+  multi_vram_buffer_horz(label_off_on[cheat_enabled] + 4, 4,
+                         NTADR_A(20, 14) + 0x20);
+  multi_vram_buffer_horz(label_off_on[cheat_enabled] + 8, 4,
+                         NTADR_A(20, 14) + 0x40);
 }
