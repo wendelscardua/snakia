@@ -11,7 +11,8 @@ void Snake::reset() {
   body.push({Board::WIDTH / 2, Board::HEIGHT / 2, Right});
   max_length = 4;
   is_alive = true;
-  ate = false;
+  ate_pellet = false;
+  ate_food = false;
 }
 
 void Snake::update(Direction input) {
@@ -71,10 +72,12 @@ void Snake::update(Direction input) {
   if (board.is_set(new_head.x, new_head.y)) {
     is_alive = false;
   } else if (board.has_pellet(new_head.x, new_head.y)) {
-    ate = true;
+    ate_pellet = true;
     if (max_length < MAX_LENGTH) {
       max_length++;
     }
+  } else if (board.has_food(new_head.x, new_head.y)) {
+    ate_food = true;
   }
 
   if (body.size() > max_length) {
@@ -185,9 +188,12 @@ void Snake::erase_head(Direction new_direction) {
     break;
   }
 
-  if (ate) {
+  if (ate_pellet) {
     // NOTE: body variants with a pellet "belly" are offset by $10
-    ate = false;
+    ate_pellet = false;
+    tile += 0x10;
+  } else if (ate_food) {
+    ate_food = false;
     tile += 0x10;
   }
 

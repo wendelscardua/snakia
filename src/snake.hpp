@@ -10,7 +10,8 @@ public:
   Queue<Position, MAX_LENGTH + 1> body;
   u16 max_length;
   bool is_alive;
-  bool ate;
+  bool ate_pellet;
+  bool ate_food;
 
   Snake();
 

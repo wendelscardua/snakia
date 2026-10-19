@@ -44,12 +44,6 @@ void Phone::game_reset() {
   board.clear();
   snake.reset();
   snake.draw_head();
-  board.spawn_pellet();
-  if (board.is_pellet_valid()) {
-    board.draw_pellet();
-  }
-
-  refresh_score_hud();
 }
 
 void Phone::loop() {
@@ -105,23 +99,26 @@ void Phone::loop() {
 void Phone::playing_update() {
   ticks++;
   if (ticks < ticks_per_step) {
-    // won't move the snake this frame, take the time to update pellet
-    if (!board.is_pellet_valid()) {
-      board.spawn_pellet();
-      if (board.is_pellet_valid()) {
-        board.draw_pellet();
-      }
-    }
+    // won't move the snake this frame, take the time to update other stuff
+    board.async_spawn_pellet();
+    board.async_spawn_food();
     return;
   }
   ticks = 0;
 
+  board.update_food();
   snake.update(input_buffer.is_empty() ? None : input_buffer.pop());
 
-  if (snake.ate) {
+  if (snake.ate_pellet) {
     score += level;
-
     refresh_score_hud();
+    board.pellet_eaten();
+  }
+
+  if (snake.ate_food) {
+    score += 3 * level + board.food_value();
+    refresh_score_hud();
+    board.food_eaten();
   }
 
   if (!snake.is_alive) {
