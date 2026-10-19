@@ -15,6 +15,8 @@ public:
   void loop();
 private:
   u16 score;
+  // per maze + cheatiness
+  u16 high_score[6][2];
   u8 level;
   u8 maze;
 

@@ -545,12 +545,8 @@ void Phone::render_thumb() {
   }
 }
 
-void Phone::refresh_score_hud() {
-  char first_row[4];
-  char second_row[4];
-
+void decimalize(u16 value, char * first_row, char * second_row) {
   u8 digit;
-  u16 value = score;
 
   digit = 0;
   if (value >= 8000) {
@@ -626,9 +622,24 @@ void Phone::refresh_score_hud() {
 
   first_row[3] = 0x30 + (u8)value;
   second_row[3] = 0x40 + (u8)value;
+}
 
+void Phone::refresh_score_hud() {
+  char first_row[4];
+  char second_row[4];
+
+  decimalize(score, first_row, second_row);
   multi_vram_buffer_horz(first_row, 4, NTADR_A(5, 2));
   multi_vram_buffer_horz(second_row, 4, NTADR_A(5, 3));
+
+  if (score > high_score[maze][cheat_enabled]) {
+    high_score[maze][cheat_enabled] = score;
+  }
+
+  decimalize(high_score[maze][cheat_enabled], first_row, second_row);
+  multi_vram_buffer_horz(first_row, 4, NTADR_A(14, 2));
+  multi_vram_buffer_horz(second_row, 4, NTADR_A(14, 3));
+
 }
 
 // start, level, cheat
