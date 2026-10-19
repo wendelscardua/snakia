@@ -1,8 +1,8 @@
 .section .prg_rom_fixed,"axR",@progbits
 
-.global banked_oam_meta_spr_horizontal
+.global oam_meta_spr_horizontal
 
-; void banked_oam_meta_spr_horizontal(int x, char y, char bank, const void *data);
+; void banked_oam_meta_spr_horizontal(int x, char y, const void *data);
 ; A/rc6: x.l
 ; X/rc7: x.h
 ; rc2: y
@@ -10,7 +10,7 @@
 ; rc5: data.h
 ; rc3: extend signal for sprite delta x
 
-banked_oam_meta_spr_horizontal:
+oam_meta_spr_horizontal:
   sta __rc6
   stx __rc7
 
