@@ -5,7 +5,7 @@
 class Board {
 public:
   static const u8 WIDTH = 22;
-  static const u8 HEIGHT = 13;
+  static const u8 HEIGHT = 12;
 
   Board();
 
