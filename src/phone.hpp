@@ -6,11 +6,6 @@
 
 class Phone {
 public:
- struct Position {
-    u8 x;
-    u8 y;
-  };
-
   Phone();
   ~Phone();
 
@@ -22,9 +17,13 @@ private:
   u8 ticks;
   u8 ticks_per_step;
 
+  Position thumb_position;
+
   Queue<Direction, 4> input_buffer;
 
   void playing_update();
 
   void thumb_update();
+
+  void render_thumb();
 };

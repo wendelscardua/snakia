@@ -1,12 +1,29 @@
 #include "phone.hpp"
 #include "assets.hpp"
+#include "metasprites.hpp"
+#include "ui-metasprites.hpp"
 #include "board.hpp"
 #include "common.hpp"
 #include "global.hpp"
 #include <nesdoug.h>
 #include <neslib.h>
 
-Phone::Phone() : keypad_position(5), ticks(0), ticks_per_step(24) {
+const u8 TICKS_PER_LEVEL[] = { 28, 25, 22, 19, 16, 13, 10, 7, 4 };
+
+const Position KEYPAD_TO_POSITION[] = {
+  { 0, 0, None },
+  { 0x40, 0xa0, None },
+  { 0x80, 0xa0, None },
+  { 0xb8, 0xa0, None },
+  { 0x40, 0xc0, None },
+  { 0x80, 0xc0, None },
+  { 0xb8, 0xc0, None },
+  { 0x40, 0xe0, None },
+  { 0x80, 0xe0, None },
+  { 0xb8, 0xe0, None },
+};
+
+Phone::Phone() : keypad_position(5), ticks(0), ticks_per_step(24), thumb_position(KEYPAD_TO_POSITION[keypad_position]) {
   pal_bg(bg_pal);
   pal_spr(spr_pal);
   vram_adr(NTADR_A(0, 0));
@@ -46,6 +63,8 @@ void Phone::loop() {
       playing_update();
       break;
     }
+
+    render_thumb();
 
     oam_hide_rest();
   }
@@ -87,9 +106,18 @@ void Phone::thumb_update() {
     keypad_position = BUTTONS_RIGHT[keypad_position];
   }
 
+  auto target = KEYPAD_TO_POSITION[keypad_position];
+
+  thumb_position.x = target.x;
+  thumb_position.y = target.y;
+
   if (pressed & PAD_A) {
     if (keypad_position != 5 && !input_buffer.is_full()) {
       input_buffer.push((Direction)keypad_position);
     }
   }
+}
+
+void Phone::render_thumb() {
+  oam_meta_spr_horizontal(thumb_position.x, thumb_position.y, UI::Thumb);
 }
