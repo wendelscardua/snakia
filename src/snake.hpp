@@ -15,7 +15,7 @@ public:
 
   Snake();
 
-  void reset();
+  void reset(Position);
 
   void update(Direction input);
 

@@ -178,6 +178,15 @@ const unsigned char mazes[6][22 * 12] = {
      0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
      0x03, 0x03, 0x03, 0x69, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03}};
 
+const Position maze_starts[6] = {
+  {Board::WIDTH / 2, Board::HEIGHT / 2, Right},
+  {Board::WIDTH / 2, Board::HEIGHT / 2, Right},
+  {Board::WIDTH / 2, Board::HEIGHT / 2, Right},
+  {2, Board::HEIGHT / 2 + 2, Right},
+  {Board::WIDTH / 2, 2, Right},
+  {Board::WIDTH / 2, Board::HEIGHT / 2, Right},
+};
+
 void Phone::game_reset() {
   const char dark_row[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -224,7 +233,7 @@ void Phone::game_reset() {
   ticks = 0;
   ticks_per_step = TICKS_PER_LEVEL[level - 1];
 
-  snake.reset();
+  snake.reset(maze_starts[maze]);
   snake.draw_head();
   refresh_score_hud();
   board.update_food();

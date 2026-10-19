@@ -8,9 +8,9 @@
 
 Snake::Snake() {}
 
-void Snake::reset() {
+void Snake::reset(Position position) {
   body.clear();
-  body.push({Board::WIDTH / 2, Board::HEIGHT / 2, Right});
+  body.push(position);
   max_length = 4;
   is_alive = true;
   ate_pellet = false;
