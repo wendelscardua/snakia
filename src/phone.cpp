@@ -63,7 +63,7 @@ void Phone::game_reset() {
 
   score = 0;
   ticks = 0;
-  ticks_per_step = TICKS_PER_LEVEL[level];
+  ticks_per_step = TICKS_PER_LEVEL[level - 1];
 
   board.clear();
   snake.reset();
@@ -98,6 +98,7 @@ void Phone::menu_reset() {
 
   menu_option = 0;
   select_menu_option();
+  refresh_level_number();
 }
 
 void Phone::loop() {
@@ -166,13 +167,41 @@ void Phone::menu_update() {
     case 0:
       global_state.game_state = Global::GameState::PrepareGame;
       break;
+    case 1:
+      if (level < 9) {
+        level++;
+        refresh_level_number();
+      }
+      break;
+    }
+    break;
+  case Left:
+    switch (menu_option) {
+    case 0:
+      break;
+    case 1:
+      if (level > 1) {
+        level--;
+        refresh_level_number();
+      }
+      break;
+    }
+    break;
+  case Right:
+    switch (menu_option) {
+    case 0:
+      break;
+    case 1:
+      if (level < 9) {
+        level++;
+        refresh_level_number();
+      }
+      break;
     }
     break;
   case None:
   case UpLeft:
   case UpRight:
-  case Left:
-  case Right:
   case DownLeft:
   case DownRight:
     break;
@@ -423,4 +452,17 @@ void Phone::select_menu_option() {
   ppu_wait_nmi();
   multi_vram_buffer_horz(selected_text[menu_option] + 24, 12, position + 0x40);
   ppu_wait_nmi();
+}
+
+const unsigned char level_digit[9][2 * 3] = {
+    {0xc0, 0xe0, 0xc1, 0xe2, 0xd0, 0xf2}, {0xd0, 0xf0, 0xd0, 0xf1, 0xd1, 0xf0},
+    {0xd0, 0xf0, 0xd0, 0xf1, 0xd0, 0xf1}, {0xd0, 0xd0, 0xd1, 0xf1, 0xc0, 0xd1},
+    {0xd0, 0xf0, 0xd1, 0xf0, 0xd0, 0xf1}, {0xd0, 0xf0, 0xd1, 0xf0, 0xd1, 0xf1},
+    {0xd0, 0xf0, 0xc0, 0xe1, 0xc0, 0xe2}, {0xd0, 0xf0, 0xd1, 0xf1, 0xd1, 0xf1},
+    {0xd0, 0xf0, 0xd1, 0xf1, 0xd0, 0xf1}};
+
+void Phone::refresh_level_number() {
+  multi_vram_buffer_horz(level_digit[level - 1], 2, NTADR_A(18, 8));
+  multi_vram_buffer_horz(level_digit[level - 1] + 2, 2, NTADR_A(18, 8) + 0x20);
+  multi_vram_buffer_horz(level_digit[level - 1] + 4, 2, NTADR_A(18, 8) + 0x40);
 }

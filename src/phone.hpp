@@ -44,4 +44,6 @@ private:
 
   void deselect_menu_option();
   void select_menu_option();
+
+  void refresh_level_number();
 };
