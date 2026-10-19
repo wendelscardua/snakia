@@ -113,6 +113,12 @@ void Phone::playing_update() {
   ticks = 0;
 
   snake.update(input_buffer.is_empty() ? None : input_buffer.pop());
+
+  if (snake.ate) {
+    score += level;
+
+    refresh_score_hud();
+  }
 }
 
 u8 interpolate(u8 source, u8 target) {
@@ -168,4 +174,90 @@ void Phone::render_thumb() {
   } else {
     oam_meta_spr_horizontal(thumb_position.x, thumb_position.y, UI::Thumb);
   }
+}
+
+void Phone::refresh_score_hud() {
+  char first_row[4];
+  char second_row[4];
+
+  u8 digit;
+  u16 value = score;
+
+  digit = 0;
+  if (value >= 8000) {
+    value -= 8000;
+    digit += 8;
+  }
+
+  if (value >= 4000) {
+    value -= 4000;
+    digit += 4;
+  }
+
+  if (value >= 2000) {
+    value -= 2000;
+    digit += 2;
+  }
+
+  if (value >= 1000) {
+    value -= 1000;
+    digit++;
+  }
+
+  first_row[0] = 0x30 + digit;
+  second_row[0] = 0x40 + digit;
+
+  digit = 0;
+  if (value >= 800) {
+    value -= 800;
+    digit += 8;
+  }
+
+  if (value >= 400) {
+    value -= 400;
+    digit += 4;
+  }
+
+  if (value >= 200) {
+    value -= 200;
+    digit += 2;
+  }
+
+  if (value >= 100) {
+    value -= 100;
+    digit++;
+  }
+
+  first_row[1] = 0x30 + digit;
+  second_row[1] = 0x40 + digit;
+
+  digit = 0;
+  if (value >= 80) {
+    value -= 80;
+    digit += 8;
+  }
+
+  if (value >= 40) {
+    value -= 40;
+    digit += 4;
+  }
+
+  if (value >= 20) {
+    value -= 20;
+    digit += 2;
+  }
+
+  if (value >= 10) {
+    value -= 10;
+    digit++;
+  }
+
+  first_row[2] = 0x30 + digit;
+  second_row[2] = 0x40 + digit;
+
+  first_row[3] = 0x30 + (u8) value;
+  second_row[3] = 0x40 + (u8) value;
+
+  multi_vram_buffer_horz(first_row, 4, NTADR_A(5, 2));
+  multi_vram_buffer_horz(second_row, 4, NTADR_A(5, 3));
 }

@@ -34,4 +34,6 @@ private:
   void thumb_update();
 
   void render_thumb();
+
+  void refresh_score_hud();
 };
