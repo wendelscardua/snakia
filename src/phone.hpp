@@ -7,6 +7,7 @@
 class Phone {
 public:
   const u8 THUMB_PRESSED_TICKS = 8;
+  const u16 GAME_OVER_DELAY = 60 * 8; // 8 seconds
 
   Phone();
   ~Phone();
@@ -29,6 +30,8 @@ private:
   u8 menu_option;
 
   bool cheat_enabled;
+
+  u16 game_over_timer;
 
   Queue<Direction, 4> input_buffer;
 

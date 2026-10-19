@@ -426,13 +426,16 @@ void Phone::playing_update() {
 
   if (!snake.is_alive) {
     global_state.game_state = Global::GameState::GameOver;
+    game_over_timer = 0;
   }
 }
 
 void Phone::game_over_update() {
   // TODO: draw game over message
 
-  if (!input_buffer.is_empty() && input_buffer.pop() == Center) {
+  game_over_timer++;
+
+  if ((!input_buffer.is_empty() && input_buffer.pop() == Center) || game_over_timer >= GAME_OVER_DELAY) {
     global_state.game_state = Global::GameState::PrepareMenu;
   }
 }
