@@ -6,6 +6,8 @@
 
 class Phone {
 public:
+  const u8 THUMB_PRESSED_TICKS = 8;
+
   Phone();
   ~Phone();
 
@@ -18,6 +20,7 @@ private:
   u8 ticks_per_step;
 
   Position thumb_position;
+  u8 thumb_pressed_ticks;
 
   Queue<Direction, 4> input_buffer;
 

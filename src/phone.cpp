@@ -1,29 +1,25 @@
 #include "phone.hpp"
 #include "assets.hpp"
-#include "metasprites.hpp"
-#include "ui-metasprites.hpp"
 #include "board.hpp"
 #include "common.hpp"
 #include "global.hpp"
+#include "metasprites.hpp"
+#include "ui-metasprites.hpp"
 #include <nesdoug.h>
 #include <neslib.h>
 
-const u8 TICKS_PER_LEVEL[] = { 28, 25, 22, 19, 16, 13, 10, 7, 4 };
+const u8 TICKS_PER_LEVEL[] = {28, 25, 22, 19, 16, 13, 10, 7, 4};
 
 const Position KEYPAD_TO_POSITION[] = {
-  { 0, 0, None },
-  { 0x40, 0xa0, None },
-  { 0x80, 0xa0, None },
-  { 0xb8, 0xa0, None },
-  { 0x40, 0xc0, None },
-  { 0x80, 0xc0, None },
-  { 0xb8, 0xc0, None },
-  { 0x40, 0xe0, None },
-  { 0x80, 0xe0, None },
-  { 0xb8, 0xe0, None },
+    {0, 0, None},       {0x40, 0xa0, None}, {0x80, 0xa0, None},
+    {0xb8, 0xa0, None}, {0x40, 0xc0, None}, {0x80, 0xc0, None},
+    {0xb8, 0xc0, None}, {0x40, 0xe0, None}, {0x80, 0xe0, None},
+    {0xb8, 0xe0, None},
 };
 
-Phone::Phone() : keypad_position(5), ticks(0), ticks_per_step(24), thumb_position(KEYPAD_TO_POSITION[keypad_position]) {
+Phone::Phone()
+    : keypad_position(5), ticks(0), ticks_per_step(24),
+      thumb_position(KEYPAD_TO_POSITION[keypad_position]) {
   pal_bg(bg_pal);
   pal_spr(spr_pal);
   vram_adr(NTADR_A(0, 0));
@@ -87,6 +83,18 @@ void Phone::playing_update() {
   snake.update(input_buffer.is_empty() ? None : input_buffer.pop());
 }
 
+u8 interpolate(u8 source, u8 target) {
+  if (source == target) {
+    return source;
+  }
+
+  if (source < target) {
+    return source + (target - source + 3) / 4;
+  } else {
+    return source - (source - target + 3) / 4;
+  }
+}
+
 void Phone::thumb_update() {
   auto pressed = global_state.input.pressed();
   const u8 BUTTONS_ABOVE[] = {0, 1, 2, 3, 1, 2, 3, 4, 5, 6};
@@ -108,16 +116,23 @@ void Phone::thumb_update() {
 
   auto target = KEYPAD_TO_POSITION[keypad_position];
 
-  thumb_position.x = target.x;
-  thumb_position.y = target.y;
+  thumb_position.x = interpolate(thumb_position.x, target.x);
+  thumb_position.y = interpolate(thumb_position.y, target.y);
 
   if (pressed & PAD_A) {
     if (keypad_position != 5 && !input_buffer.is_full()) {
       input_buffer.push((Direction)keypad_position);
     }
+    thumb_position = target;
+    thumb_pressed_ticks = THUMB_PRESSED_TICKS;
   }
 }
 
 void Phone::render_thumb() {
-  oam_meta_spr_horizontal(thumb_position.x, thumb_position.y, UI::Thumb);
+  if (thumb_pressed_ticks) {
+    thumb_pressed_ticks--;
+    oam_meta_spr_horizontal(thumb_position.x, thumb_position.y, UI::PressedThumb);
+  } else {
+    oam_meta_spr_horizontal(thumb_position.x, thumb_position.y, UI::Thumb);
+  }
 }
