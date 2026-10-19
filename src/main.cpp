@@ -1,5 +1,7 @@
+#include "ggsound.hpp"
 #include "global.hpp"
 #include "phone.hpp"
+#include "soundtrack-ptr.hpp"
 #include <nesdoug.h>
 #include <neslib.h>
 #include <peekpoke.h>
@@ -21,6 +23,8 @@ int main() {
   set_vram_buffer();
 
   Phone phone;
+
+  GGSound::init(GGSound::Region::NTSC, song_list, sfx_list, instrument_list);
 
   phone.loop();
 }

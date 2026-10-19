@@ -1,6 +1,8 @@
 #include "snake.hpp"
 #include "board.hpp"
+#include "ggsound.hpp"
 #include "position.hpp"
+#include "soundtrack.hpp"
 #include <nesdoug.h>
 #include <neslib.h>
 
@@ -71,13 +73,16 @@ void Snake::update(Direction input) {
 
   if (board.is_set(new_head.x, new_head.y)) {
     is_alive = false;
+    GGSound::play_sfx(SFX::Bleargh, GGSound::SFXPriority::Two);
   } else if (board.has_pellet(new_head.x, new_head.y)) {
     ate_pellet = true;
     if (max_length < MAX_LENGTH) {
       max_length++;
     }
+    GGSound::play_sfx(SFX::Bloop, GGSound::SFXPriority::Two);
   } else if (board.has_food(new_head.x, new_head.y)) {
     ate_food = true;
+    GGSound::play_sfx(SFX::Bleep, GGSound::SFXPriority::Two);
   }
 
   if (body.size() > max_length) {
