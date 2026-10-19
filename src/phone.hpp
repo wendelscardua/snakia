@@ -15,6 +15,7 @@ public:
 private:
   u16 score;
   u8 level;
+  u8 maze;
 
   Snake snake;
   u8 keypad_position;
@@ -48,5 +49,6 @@ private:
   void select_menu_option();
 
   void refresh_level_number();
+  void refresh_maze_number();
   void refresh_cheat_status();
 };

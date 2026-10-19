@@ -19,7 +19,7 @@ const Position KEYPAD_TO_POSITION[] = {
 };
 
 Phone::Phone()
-    : level(4), keypad_position(5),
+    : level(4), maze(0), keypad_position(5),
       thumb_position(KEYPAD_TO_POSITION[keypad_position]),
       cheat_enabled(false) {
   pal_bg(bg_pal);
@@ -100,6 +100,7 @@ void Phone::menu_reset() {
   menu_option = 0;
   select_menu_option();
   refresh_level_number();
+  refresh_maze_number();
   refresh_cheat_status();
 }
 
@@ -176,7 +177,10 @@ void Phone::menu_update() {
       }
       break;
     case 2:
-      // TODO: select maze
+      if (maze < 5) {
+        maze++;
+        refresh_maze_number();
+      }
       break;
     case 3:
       cheat_enabled = !cheat_enabled;
@@ -195,7 +199,11 @@ void Phone::menu_update() {
       }
       break;
     case 2:
-      // TODO: select maze
+      if (maze > 0) {
+        maze--;
+        refresh_maze_number();
+      }
+      break;
       break;
     case 3:
       cheat_enabled = !cheat_enabled;
@@ -214,7 +222,10 @@ void Phone::menu_update() {
       }
       break;
     case 2:
-      // TODO: select maze
+      if (maze < 5) {
+        maze++;
+        refresh_maze_number();
+      }
       break;
     case 3:
       cheat_enabled = !cheat_enabled;
@@ -518,17 +529,23 @@ void Phone::select_menu_option() {
   ppu_wait_nmi();
 }
 
-const unsigned char level_digit[9][2 * 3] = {
-    {0xc0, 0xe0, 0xc1, 0xe2, 0xd0, 0xf2}, {0xd0, 0xf0, 0xd0, 0xf1, 0xd1, 0xf0},
-    {0xd0, 0xf0, 0xd0, 0xf1, 0xd0, 0xf1}, {0xd0, 0xd0, 0xd1, 0xf1, 0xc0, 0xd1},
-    {0xd0, 0xf0, 0xd1, 0xf0, 0xd0, 0xf1}, {0xd0, 0xf0, 0xd1, 0xf0, 0xd1, 0xf1},
-    {0xd0, 0xf0, 0xc0, 0xe1, 0xc0, 0xe2}, {0xd0, 0xf0, 0xd1, 0xf1, 0xd1, 0xf1},
-    {0xd0, 0xf0, 0xd1, 0xf1, 0xd0, 0xf1}};
+const unsigned char sixel_digit[10][2 * 3] = {
+    {0xd0, 0xf0, 0xd1, 0xd1, 0xd1, 0xf1}, {0xc0, 0xe0, 0xc1, 0xe2, 0xd0, 0xf2},
+    {0xd0, 0xf0, 0xd0, 0xf1, 0xd1, 0xf0}, {0xd0, 0xf0, 0xd0, 0xf1, 0xd0, 0xf1},
+    {0xd0, 0xd0, 0xd1, 0xf1, 0xc0, 0xd1}, {0xd0, 0xf0, 0xd1, 0xf0, 0xd0, 0xf1},
+    {0xd0, 0xf0, 0xd1, 0xf0, 0xd1, 0xf1}, {0xd0, 0xf0, 0xc0, 0xe1, 0xc0, 0xe2},
+    {0xd0, 0xf0, 0xd1, 0xf1, 0xd1, 0xf1}, {0xd0, 0xf0, 0xd1, 0xf1, 0xd0, 0xf1}};
 
 void Phone::refresh_level_number() {
-  multi_vram_buffer_horz(level_digit[level - 1], 2, NTADR_A(18, 8));
-  multi_vram_buffer_horz(level_digit[level - 1] + 2, 2, NTADR_A(18, 8) + 0x20);
-  multi_vram_buffer_horz(level_digit[level - 1] + 4, 2, NTADR_A(18, 8) + 0x40);
+  multi_vram_buffer_horz(sixel_digit[level], 2, NTADR_A(18, 8));
+  multi_vram_buffer_horz(sixel_digit[level] + 2, 2, NTADR_A(18, 8) + 0x20);
+  multi_vram_buffer_horz(sixel_digit[level] + 4, 2, NTADR_A(18, 8) + 0x40);
+}
+
+void Phone::refresh_maze_number() {
+  multi_vram_buffer_horz(sixel_digit[maze], 2, NTADR_A(18, 11));
+  multi_vram_buffer_horz(sixel_digit[maze] + 2, 2, NTADR_A(18, 11) + 0x20);
+  multi_vram_buffer_horz(sixel_digit[maze] + 4, 2, NTADR_A(18, 11) + 0x40);
 }
 
 const unsigned char label_off_on[2][4 * 3] = {
