@@ -8,7 +8,7 @@
 #include <nesdoug.h>
 #include <neslib.h>
 
-const u8 TICKS_PER_LEVEL[] = {28, 25, 22, 19, 16, 13, 10, 7, 4};
+const u8 TICKS_PER_LEVEL[] = {36, 32, 28, 24, 20, 16, 12, 8, 4};
 
 const Position KEYPAD_TO_POSITION[] = {
     {0, 0, None},       {0x40, 0xa0, None}, {0x80, 0xa0, None},
@@ -18,12 +18,27 @@ const Position KEYPAD_TO_POSITION[] = {
 };
 
 Phone::Phone()
-    : keypad_position(5), ticks(0), ticks_per_step(24),
+    : level(4), keypad_position(5),
       thumb_position(KEYPAD_TO_POSITION[keypad_position]) {
   pal_bg(bg_pal);
   pal_spr(spr_pal);
   vram_adr(NTADR_A(0, 0));
   vram_write(screen_nam, 1024);
+
+  ppu_on_all();
+  pal_fade_to(0, 4);
+
+  global_state.game_state = Global::GameState::Resetting;
+}
+
+Phone::~Phone() {
+  // not needed for now
+}
+
+void Phone::game_reset() {
+  score = 0;
+  ticks = 0;
+  ticks_per_step = TICKS_PER_LEVEL[level];
 
   board.clear();
   snake.reset();
@@ -32,16 +47,6 @@ Phone::Phone()
   if (board.is_pellet_valid()) {
     board.draw_pellet();
   }
-  flush_vram_update2();
-
-  ppu_on_all();
-  pal_fade_to(0, 4);
-
-  global_state.game_state = Global::GameState::Playing;
-}
-
-Phone::~Phone() {
-  // not needed for now
 }
 
 void Phone::loop() {
@@ -55,8 +60,15 @@ void Phone::loop() {
     thumb_update();
 
     switch (global_state.game_state) {
+    case Global::GameState::Resetting:
+      game_reset();
+      global_state.game_state = Global::GameState::Playing;
+      break;
     case Global::GameState::Playing:
       playing_update();
+      break;
+    case Global::GameState::Title:
+    case Global::GameState::Menu:
       break;
     }
 
@@ -131,7 +143,8 @@ void Phone::thumb_update() {
 void Phone::render_thumb() {
   if (thumb_pressed_ticks) {
     thumb_pressed_ticks--;
-    oam_meta_spr_horizontal(thumb_position.x, thumb_position.y, UI::PressedThumb);
+    oam_meta_spr_horizontal(thumb_position.x, thumb_position.y,
+                            UI::PressedThumb);
   } else {
     oam_meta_spr_horizontal(thumb_position.x, thumb_position.y, UI::Thumb);
   }

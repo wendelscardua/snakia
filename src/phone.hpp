@@ -13,6 +13,9 @@ public:
 
   void loop();
 private:
+  u16 score;
+  u8 level;
+
   Snake snake;
   u8 keypad_position;
 
@@ -23,6 +26,8 @@ private:
   u8 thumb_pressed_ticks;
 
   Queue<Direction, 4> input_buffer;
+
+  void game_reset();
 
   void playing_update();
 
