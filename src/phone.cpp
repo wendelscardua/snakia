@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "global.hpp"
 #include "metasprites.hpp"
+#include "position.hpp"
 #include "ui-metasprites.hpp"
 #include <nesdoug.h>
 #include <neslib.h>
@@ -60,10 +61,29 @@ void Phone::loop() {
     thumb_update();
 
     switch (global_state.game_state) {
-    case Global::GameState::Resetting:
+    case Global::GameState::Resetting: {
+      const char dark_row[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+      const char light_row[] = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+      for (u8 row = 0; row < Board::HEIGHT; row++) {
+        multi_vram_buffer_horz(dark_row, 22,
+                               NTADR_A(Position::X_SCREEN_OFFSET,
+                                       row + Position::Y_SCREEN_OFFSET));
+        ppu_wait_nmi();
+      }
+      for (u8 row = 0; row < Board::HEIGHT; row++) {
+        multi_vram_buffer_horz(light_row, 22,
+                               NTADR_A(Position::X_SCREEN_OFFSET,
+                                       row + Position::Y_SCREEN_OFFSET));
+        ppu_wait_nmi();
+      }
+
+
       game_reset();
+
       global_state.game_state = Global::GameState::Playing;
-      break;
+    }; break;
     case Global::GameState::Playing:
       playing_update();
       break;
