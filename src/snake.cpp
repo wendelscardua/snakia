@@ -122,7 +122,7 @@ void Snake::draw_head() {
 
 
   auto next_position = head + head.direction;
-  if (board.has_pellet(next_position.x, next_position.y)) {
+  if (board.has_pellet(next_position.x, next_position.y) || board.has_food(next_position.x, next_position.y)) {
     // NOTE: "open mouth" tiles are offset from "closed mouth" ones by $10
     tile += 0x10;
   }
