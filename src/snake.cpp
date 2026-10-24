@@ -32,7 +32,7 @@ void Snake::update(Direction input) {
   };
 
   const Direction NEXT_DIRECTION_FROM_DOWN[] = {
-      Down, Left, Down, UpRight, Left, Down, Right, Left, Down, Right,
+      Down, Left, Down, Right, Left, Down, Right, Left, Down, Right,
   };
 
   const Direction NEXT_DIRECTION_FROM_LEFT[] = {
